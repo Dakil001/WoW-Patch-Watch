@@ -36,6 +36,9 @@ let refreshPromise = null;
 let isQuitting = false;
 let pendingVisibleCardCount = CLIENTS_PER_PAGE;
 
+const GITHUB_URL = 'https://github.com/Dakil001/WoW-Patch-Watch';
+const BUY_ME_A_COFFEE_URL = 'https://buymeacoffee.com/dakil';
+
 function currentLanguage() {
   return normalizeLanguage(store?.get()?.settings?.language);
 }
@@ -107,9 +110,21 @@ function buildApplicationMenu() {
       ]
     },
     {
-      label: tr('menu.help'),
+      label: tr('menu.version'),
       submenu: [
         { label: `WoW Patch Watch ${app.getVersion()}`, enabled: false }
+      ]
+    },
+    {
+      label: tr('menu.github'),
+      submenu: [
+        { label: tr('menu.openGithub'), click: () => shell.openExternal(GITHUB_URL).catch(() => {}) }
+      ]
+    },
+    {
+      label: tr('menu.buyMeACoffee'),
+      submenu: [
+        { label: tr('menu.openBuyMeACoffee'), click: () => shell.openExternal(BUY_ME_A_COFFEE_URL).catch(() => {}) }
       ]
     }
   );

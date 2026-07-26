@@ -1,6 +1,6 @@
 {
   "name": "wow-patch-watch",
-  "version": "1.0.6",
+  "version": "1.0.7",
   "description": "Cross-platform World of Warcraft patch, PTR and addon compatibility tracker",
   "main": "main.js",
   "author": "Dakil",

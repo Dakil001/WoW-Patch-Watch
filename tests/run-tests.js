@@ -9,6 +9,7 @@ const { execFileSync } = require('node:child_process');
 const root = path.resolve(__dirname, '..');
 const policy = require(path.join(root, 'lib', 'notification-policy'));
 const { JsonStore, defaultState } = require(path.join(root, 'lib', 'store'));
+const { t } = require(path.join(root, 'lib', 'i18n'));
 
 function testSyntax() {
   const files = [
@@ -99,6 +100,14 @@ function testTranslationsAndStaticUi() {
 
   const mainSource = fs.readFileSync(path.join(root, 'main.js'), 'utf8');
   assert.equal(mainSource.includes("tr('menu.edit')"), false);
+  assert.equal(mainSource.includes("tr('menu.help')"), false);
+  assert.equal(mainSource.includes("tr('menu.version')"), true);
+  assert.equal(mainSource.includes("tr('menu.github')"), true);
+  assert.equal(mainSource.includes("tr('menu.buyMeACoffee')"), true);
+  assert.equal(mainSource.includes('https://github.com/Dakil001/WoW-Patch-Watch'), true);
+  assert.equal(mainSource.includes('https://buymeacoffee.com/dakil'), true);
+  assert.equal(t('de', 'menu.buyMeACoffee'), 'Buy Me a Coffee');
+  assert.equal(t('en', 'menu.buyMeACoffee'), 'Buy Me a Coffee');
   const rendererSource = fs.readFileSync(path.join(root, 'renderer/app.js'), 'utf8');
   assert.equal(rendererSource.includes('newsOpen: nextOpen'), true);
   assert.equal(rendererSource.includes('settingsInputs.notificationMode'), true);
@@ -112,7 +121,7 @@ function run() {
   testNotificationPolicy();
   testDefaultsAndMigration();
   testTranslationsAndStaticUi();
-  console.log('All WoW Patch Watch 1.0.6 tests passed.');
+  console.log('All WoW Patch Watch 1.0.7 tests passed.');
 }
 
 run();
