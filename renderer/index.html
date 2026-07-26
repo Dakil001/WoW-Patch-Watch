@@ -1,0 +1,197 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'">
+  <title>WoW Patch Watch</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="app-header">
+    <div class="brand">
+      <div class="brand-mark">W</div>
+      <div>
+        <h1>WoW Patch Watch</h1>
+        <p data-i18n="app.subtitle">Live-, PTR- und Addon-Kompatibilitätsübersicht</p>
+      </div>
+    </div>
+    <div class="header-actions">
+      <button id="refreshButton" class="button primary" data-i18n="button.refresh">Aktualisieren</button>
+      <button id="clientsButton" class="button" data-i18n="button.clients">Clients</button>
+      <button id="settingsButton" class="button" data-i18n="button.settings">Einstellungen</button>
+    </div>
+  </header>
+
+  <main>
+    <section class="status-panel">
+      <div>
+        <strong id="globalStatus" data-i18n="status.loadingLocal">Lokale Daten werden geladen …</strong>
+        <span id="lastRefresh"></span>
+      </div>
+      <div class="progress-track"><div id="progressBar" class="progress-bar"></div></div>
+      <pre id="errorBox" class="error-box hidden"></pre>
+    </section>
+
+    <nav id="pageNavigation" class="page-navigation hidden" aria-label="Clientseiten" data-i18n-aria-label="pagination.label">
+      <span id="pageInfo"></span>
+      <div>
+        <button id="previousPage" class="button compact" type="button" data-i18n="button.previous">‹ Vorherige</button>
+        <button id="nextPage" class="button compact" type="button" data-i18n="button.next">Nächste ›</button>
+      </div>
+    </nav>
+
+    <section id="cards" class="cards" aria-live="polite"></section>
+    <section id="emptyClients" class="empty-clients hidden">
+      <h2 data-i18n="empty.title">Keine Clients eingeblendet</h2>
+      <p data-i18n="empty.text">Öffne die Clientverwaltung und aktiviere einen vorhandenen Client oder füge einen neuen hinzu.</p>
+      <button id="emptyClientsButton" class="button primary" type="button" data-i18n="button.manageClients">Clients verwalten</button>
+    </section>
+  </main>
+
+  <dialog id="settingsDialog" class="settings-dialog">
+    <form id="settingsForm" method="dialog">
+      <div class="dialog-header">
+        <div>
+          <h2 data-i18n="settings.title">Einstellungen</h2>
+          <p data-i18n="settings.subtitle">Sprache, automatische Prüfung, Hintergrundbetrieb und optionale E-Mail-Benachrichtigung.</p>
+        </div>
+        <button type="button" id="closeSettings" class="icon-button" aria-label="Schließen" data-i18n-aria-label="settings.closeAria">×</button>
+      </div>
+
+      <div class="settings-grid">
+        <section class="settings-section">
+          <h3 data-i18n="settings.updateTitle">Allgemein und Aktualisierung</h3>
+          <label><span data-i18n="language.label">Sprache</span>
+            <select id="language">
+              <option value="de" data-i18n="language.de">Deutsch</option>
+              <option value="en" data-i18n="language.en">Englisch</option>
+            </select>
+          </label>
+          <label class="toggle-row"><input id="autoRefresh" type="checkbox"><span data-i18n="settings.autoRefresh">Automatisch aktualisieren</span></label>
+          <label><span data-i18n="settings.interval">Prüfintervall</span>
+            <select id="refreshMinutes">
+              <option value="15" data-i18n="settings.interval.15">alle 15 Minuten</option>
+              <option value="30" data-i18n="settings.interval.30">alle 30 Minuten</option>
+              <option value="60" data-i18n="settings.interval.60">stündlich</option>
+              <option value="180" data-i18n="settings.interval.180">alle 3 Stunden</option>
+              <option value="360" data-i18n="settings.interval.360">alle 6 Stunden</option>
+              <option value="720" data-i18n="settings.interval.720">alle 12 Stunden</option>
+              <option value="1440" data-i18n="settings.interval.1440">täglich</option>
+            </select>
+          </label>
+          <label class="toggle-row"><input id="runInBackground" type="checkbox"><span data-i18n="settings.background">Beim Schließen im Infobereich weiterlaufen</span></label>
+          <label class="toggle-row"><input id="launchAtLogin" type="checkbox"><span data-i18n="settings.launch">Mit Windows/macOS starten</span></label>
+        </section>
+
+        <section class="settings-section">
+          <h3 data-i18n="settings.emailTitle">E-Mail (SMTP)</h3>
+          <label class="toggle-row"><input id="emailEnabled" type="checkbox"><span data-i18n="settings.emailEnabled">E-Mail-Versand aktivieren</span></label>
+          <div class="two-columns">
+            <label><span data-i18n="settings.smtpHost">SMTP-Server (Hostname)</span><input id="smtpHost" type="text" autocomplete="off" placeholder="z. B. smtp.mail.de" data-i18n-placeholder="settings.smtpHostPlaceholder"><span class="field-help" data-i18n="settings.smtpHostHelp">Keine E-Mail-Adresse eintragen. Für mail.de: smtp.mail.de</span></label>
+            <label><span data-i18n="settings.port">Port</span><input id="smtpPort" type="number" min="1" max="65535" value="587"></label>
+          </div>
+          <label class="toggle-row"><input id="smtpSecure" type="checkbox"><span data-i18n="settings.secure">Direktes TLS/SSL (typisch Port 465)</span></label>
+          <label><span data-i18n="settings.user">Benutzer / Login-E-Mail</span><input id="smtpUser" type="text" autocomplete="username" placeholder="z. B. alex-sinner@mail.de" data-i18n-placeholder="settings.userPlaceholder"></label>
+          <label><span data-i18n="settings.password">Passwort / App-Passwort</span><input id="smtpPassword" type="password" autocomplete="new-password" placeholder="Leer lassen, um gespeichertes Passwort beizubehalten" data-i18n-placeholder="settings.passwordPlaceholder"></label>
+          <label class="toggle-row subtle"><input id="clearPassword" type="checkbox"><span data-i18n="settings.clearPassword">Gespeichertes Passwort löschen</span></label>
+          <label><span data-i18n="settings.from">Absender (optional)</span><input id="smtpFrom" type="email" autocomplete="off" placeholder="standardmäßig SMTP-Benutzer" data-i18n-placeholder="settings.fromPlaceholder"></label>
+          <label><span data-i18n="settings.to">Empfänger</span><input id="smtpTo" type="text" autocomplete="off" placeholder="name@example.de" data-i18n-placeholder="settings.toPlaceholder"></label>
+          <p class="help-text"><strong>mail.de:</strong> <span data-i18n="settings.mailHelp">Server smtp.mail.de, Port 587 mit STARTTLS (Schalter aus) oder Port 465 mit direktem TLS/SSL (Schalter an). Änderungs-E-Mails führen die dem Client zugeordneten Addons ausdrücklich auf.</span></p>
+        </section>
+      </div>
+
+      <div id="settingsMessage" class="settings-message"></div>
+      <div class="dialog-actions">
+        <button type="button" id="testEmailButton" class="button" data-i18n="button.testEmail">Test-E-Mail senden</button>
+        <div class="spacer"></div>
+        <button type="button" id="cancelSettings" class="button" data-i18n="button.cancel">Abbrechen</button>
+        <button type="submit" class="button primary" data-i18n="button.save">Speichern</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog id="clientsDialog" class="clients-dialog">
+    <div class="dialog-header">
+      <div>
+        <h2 data-i18n="clients.title">Clients verwalten</h2>
+        <p data-i18n="clients.subtitle">Clients ein- oder ausblenden und zusätzliche WoW-Produkte anlegen. Pro Seite werden höchstens vier Clients dargestellt.</p>
+      </div>
+      <button type="button" id="closeClients" class="icon-button" aria-label="Schließen" data-i18n-aria-label="settings.closeAria">×</button>
+    </div>
+
+    <div class="clients-dialog-body">
+      <div class="clients-list-header">
+        <h3 data-i18n="clients.existing">Vorhandene Clients</h3>
+        <button id="newClientButton" class="button primary" type="button" data-i18n="button.addClient">Neuen Client hinzufügen</button>
+      </div>
+      <div id="clientsList" class="clients-list"></div>
+
+      <form id="clientForm" class="client-form hidden">
+        <input id="clientEditId" type="hidden">
+        <div class="client-form-heading">
+          <div>
+            <h3 id="clientFormTitle" data-i18n="clients.newTitle">Neuen Client hinzufügen</h3>
+            <p data-i18n="clients.formHelp">Die Client-ID ist der Battle.net-Produktname. Ein Präfix grenzt gemeinsam genutzte Produkte auf eine Versionsfamilie ein, beispielsweise 2.5.</p>
+          </div>
+        </div>
+        <div class="client-form-grid">
+          <label class="full-row"><span data-i18n="clients.displayName">Anzeigename</span><input id="clientName" type="text" maxlength="100" required placeholder="z. B. Classic Legion" data-i18n-placeholder="clients.displayNamePlaceholder"></label>
+          <section class="client-channel-form">
+            <h4 data-i18n="clients.live">Live</h4>
+            <label><span data-i18n="clients.clientId">Client-ID</span><input id="liveProduct" type="text" maxlength="100" required placeholder="z. B. wow_classic" data-i18n-placeholder="clients.liveProductPlaceholder"></label>
+            <label><span data-i18n="clients.prefixes">Versionspräfixe (optional)</span><input id="livePrefixes" type="text" maxlength="200" placeholder="z. B. 7.3 oder 7.3, 7.4" data-i18n-placeholder="clients.livePrefixesPlaceholder"></label>
+          </section>
+          <section class="client-channel-form">
+            <h4 data-i18n="clients.ptr">PTR / Testrealm</h4>
+            <label><span data-i18n="clients.clientIdOptional">Client-ID (optional)</span><input id="ptrProduct" type="text" maxlength="100" placeholder="z. B. wow_classic_ptr" data-i18n-placeholder="clients.ptrProductPlaceholder"></label>
+            <label><span data-i18n="clients.prefixes">Versionspräfixe (optional)</span><input id="ptrPrefixes" type="text" maxlength="200" placeholder="z. B. 7.3" data-i18n-placeholder="clients.ptrPrefixesPlaceholder"></label>
+          </section>
+        </div>
+        <div id="clientFormMessage" class="settings-message"></div>
+        <div class="client-form-actions">
+          <button id="cancelClientEdit" class="button" type="button" data-i18n="button.cancel">Abbrechen</button>
+          <button class="button primary" type="submit" data-i18n="button.saveClient">Client speichern</button>
+        </div>
+      </form>
+    </div>
+  </dialog>
+
+  <template id="cardTemplate">
+    <article class="game-card">
+      <div class="card-header">
+        <h2 class="game-title"></h2>
+        <span class="ptr-state badge"></span>
+      </div>
+      <div class="channel-grid">
+        <section class="channel live-channel">
+          <div class="channel-heading"><span data-i18n="card.live">LIVE</span><label><input class="notify-live" type="checkbox"> <span data-i18n="card.notify">Benachrichtigen</span></label></div>
+          <div class="version-value live-version"></div>
+          <div class="interface-value live-interface"></div>
+          <div class="observed-value live-observed"></div>
+        </section>
+        <section class="channel ptr-channel">
+          <div class="channel-heading"><span data-i18n="card.ptr">PTR / TESTREALM</span><label><input class="notify-ptr" type="checkbox"> <span data-i18n="card.notify">Benachrichtigen</span></label></div>
+          <div class="version-value ptr-version"></div>
+          <div class="interface-value ptr-interface"></div>
+          <div class="observed-value ptr-observed"></div>
+        </section>
+      </div>
+      <section class="addons-section">
+        <div class="section-label" data-i18n="card.addons">Zugeordnete Addons</div>
+        <div class="addon-tags"></div>
+        <div class="addon-input-row">
+          <input class="addon-input" type="text" maxlength="100" placeholder="Addonname hinzufügen" data-i18n-placeholder="card.addonPlaceholder">
+          <button class="button small add-addon" type="button" data-i18n="button.add">Hinzufügen</button>
+        </div>
+      </section>
+      <details class="changes-details" open>
+        <summary><span data-i18n="card.changes">Änderungen und Hinweise der letzten 14 Tage</span> <span class="change-count"></span></summary>
+        <div class="timeline"></div>
+      </details>
+    </article>
+  </template>
+
+  <script src="app.js"></script>
+</body>
+</html>
