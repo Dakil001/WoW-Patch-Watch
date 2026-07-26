@@ -397,3 +397,71 @@ input:focus, select:focus { border-color: #5e82bd; box-shadow: 0 0 0 3px rgba(94
   .clients-dialog-body { padding: 14px 15px 18px; }
 }
 
+
+.notify-toggle { cursor: help; }
+
+.client-form-title-row {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+.client-form-title-row h3 { margin: 0; }
+.info-button {
+  display: inline-grid;
+  flex: 0 0 auto;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border: 1px solid #56709b;
+  border-radius: 50%;
+  padding: 0;
+  background: #182744;
+  color: #bcd6ff;
+  font-size: 14px;
+  font-weight: 850;
+  line-height: 1;
+}
+.info-button:hover { border-color: #7ca4df; background: #22365c; color: #ffffff; }
+
+.client-help-dialog {
+  width: min(820px, calc(100vw - 40px));
+  max-height: calc(100vh - 40px);
+  border: 1px solid #3b4c6d;
+  border-radius: 14px;
+  padding: 0;
+  background: #111a2c;
+  color: var(--text);
+  box-shadow: 0 26px 90px rgba(0, 0, 0, .65);
+}
+.client-help-dialog::backdrop { background: rgba(2, 5, 10, .72); backdrop-filter: blur(4px); }
+.client-help-body { max-height: calc(100vh - 132px); overflow: auto; padding: 18px 22px 22px; }
+.client-help-body section {
+  margin-bottom: 13px;
+  padding: 13px 15px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: #0f1829;
+}
+.client-help-body h3 { margin-bottom: 6px; color: var(--gold); font-size: 14px; }
+.client-help-body p { margin-bottom: 7px; color: #c4d0e3; font-size: 12px; line-height: 1.52; }
+.client-help-body p:last-child { margin-bottom: 0; }
+.code-line {
+  overflow-wrap: anywhere;
+  border: 1px solid #2d4166;
+  border-radius: 7px;
+  padding: 8px 10px;
+  background: #08101d;
+}
+.code-line code, .help-table code { color: #b9d5ff; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+.help-table-wrap { overflow-x: auto; }
+.help-table { width: 100%; border-collapse: collapse; font-size: 11.5px; }
+.help-table th, .help-table td { border-bottom: 1px solid #2a3957; padding: 8px 9px; text-align: left; white-space: nowrap; }
+.help-table th { color: #d9e5f8; background: #111d32; }
+.help-table td { color: #c2cee0; }
+.help-note { margin-top: 10px; color: var(--muted) !important; }
+.client-help-actions { display: flex; justify-content: flex-end; gap: 9px; }
+
+@media (max-width: 760px) {
+  .client-help-body { padding: 14px 15px 18px; }
+  .client-help-actions { flex-direction: column; }
+}

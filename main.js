@@ -15,7 +15,7 @@ const {
   screen
 } = require('electron');
 const { JsonStore, migrateKnownSmtpMistakes } = require('./lib/store');
-const { HISTORY_DAYS, CLIENTS_PER_PAGE, productsForTracks } = require('./lib/constants');
+const { HISTORY_DAYS, DEFAULT_REFRESH_MINUTES, CLIENTS_PER_PAGE, productsForTracks } = require('./lib/constants');
 const {
   fetchCurrentProduct,
   fetchProductHistory,
@@ -26,6 +26,7 @@ const {
 } = require('./lib/data-service');
 const { sendTestEmail, sendChangeEmail, validateEmailSettings } = require('./lib/mailer');
 const { t, getCatalog, normalizeLanguage } = require('./lib/i18n');
+const { normalizeNotificationMode, shouldNotifyChange } = require('./lib/notification-policy');
 
 let mainWindow = null;
 let tray = null;
@@ -86,18 +87,6 @@ function buildApplicationMenu() {
           { type: 'separator' },
           { role: 'quit', label: tr('menu.quit') }
         ] : [])
-      ]
-    },
-    {
-      label: tr('menu.edit'),
-      submenu: [
-        { role: 'undo', label: tr('menu.undo') },
-        { role: 'redo', label: tr('menu.redo') },
-        { type: 'separator' },
-        { role: 'cut', label: tr('menu.cut') },
-        { role: 'copy', label: tr('menu.copy') },
-        { role: 'paste', label: tr('menu.paste') },
-        { role: 'selectAll', label: tr('menu.selectAll') }
       ]
     },
     {
@@ -299,7 +288,7 @@ function scheduleRefresh() {
   refreshTimer = null;
   const settings = store.get().settings;
   if (!settings.autoRefresh) return;
-  const minutes = Math.max(15, Math.min(1440, Number(settings.refreshMinutes) || 60));
+  const minutes = Math.max(15, Math.min(1440, Number(settings.refreshMinutes) || DEFAULT_REFRESH_MINUTES));
   refreshTimer = setInterval(() => refreshAll('timer').catch(() => {}), minutes * 60 * 1000);
 }
 
@@ -391,7 +380,8 @@ function localEventsFromChanges(changes) {
 }
 
 async function notifyChanges(changes) {
-  const selected = changes.filter((change) => change.notify);
+  const mode = normalizeNotificationMode(store.get().settings.notificationMode);
+  const selected = changes.filter((change) => shouldNotifyChange(change, mode));
   if (!selected.length) return;
 
   if (Notification.isSupported()) {
@@ -515,7 +505,7 @@ function findTrack(gameId) {
 
 function validateEntryUpdate(gameId, patch) {
   if (!findTrack(gameId)) throw new Error(tr('error.unknownEntry'));
-  const current = store.get().entries[gameId] || { addons: [], notifyLive: false, notifyPtr: false };
+  const current = store.get().entries[gameId] || { addons: [], notifyLive: false, notifyPtr: false, newsOpen: true };
   const next = { ...current };
   if (patch.addons !== undefined) {
     if (!Array.isArray(patch.addons)) throw new Error(tr('error.addonListInvalid'));
@@ -523,6 +513,7 @@ function validateEntryUpdate(gameId, patch) {
   }
   if (patch.notifyLive !== undefined) next.notifyLive = Boolean(patch.notifyLive);
   if (patch.notifyPtr !== undefined) next.notifyPtr = Boolean(patch.notifyPtr);
+  if (patch.newsOpen !== undefined) next.newsOpen = Boolean(patch.newsOpen);
   return next;
 }
 
@@ -593,7 +584,7 @@ function registerIpc() {
       state.tracks[index] = next;
     } else {
       state.tracks.push(next);
-      state.entries[next.id] = { addons: [], notifyLive: false, notifyPtr: false };
+      state.entries[next.id] = { addons: [], notifyLive: false, notifyPtr: false, newsOpen: true };
     }
     delete state.current[next.id];
     state.history = state.history.filter((item) => item.gameId !== next.id);
@@ -621,7 +612,7 @@ function registerIpc() {
     const currentEmail = state.settings.email;
     const previousLanguage = currentLanguage();
     const nextLanguage = normalizeLanguage(submitted.language);
-    const refreshMinutes = Math.max(15, Math.min(1440, Number(submitted.refreshMinutes) || 60));
+    const refreshMinutes = Math.max(15, Math.min(1440, Number(submitted.refreshMinutes) || DEFAULT_REFRESH_MINUTES));
     const emailInput = submitted.email || {};
     let encryptedPassword = currentEmail.encryptedPassword;
     if (typeof emailInput.password === 'string' && emailInput.password.length > 0) {
@@ -636,6 +627,7 @@ function registerIpc() {
       language: nextLanguage,
       autoRefresh: Boolean(submitted.autoRefresh),
       refreshMinutes,
+      notificationMode: normalizeNotificationMode(submitted.notificationMode),
       runInBackground: Boolean(submitted.runInBackground),
       launchAtLogin: Boolean(submitted.launchAtLogin),
       email: {
@@ -707,6 +699,8 @@ if (!lock) {
     app.setAppUserModelId('de.dakil.wowpatchwatch');
     store = new JsonStore(app.getPath('userData'));
     store.load();
+    app.setLoginItemSettings({ openAtLogin: Boolean(store.get().settings.launchAtLogin) });
+    store.save();
     registerIpc();
     Menu.setApplicationMenu(buildApplicationMenu());
     createWindow();

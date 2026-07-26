@@ -3,7 +3,6 @@
 let state = null;
 let refreshing = false;
 let currentPage = 0;
-const newsOpenByGameId = new Map();
 let lastRequestedCardCount = null;
 
 const elements = {
@@ -35,13 +34,19 @@ const elements = {
   clientForm: document.getElementById('clientForm'),
   clientFormTitle: document.getElementById('clientFormTitle'),
   clientFormMessage: document.getElementById('clientFormMessage'),
-  cancelClientEdit: document.getElementById('cancelClientEdit')
+  cancelClientEdit: document.getElementById('cancelClientEdit'),
+  clientHelpButton: document.getElementById('clientHelpButton'),
+  clientHelpDialog: document.getElementById('clientHelpDialog'),
+  closeClientHelp: document.getElementById('closeClientHelp'),
+  openBlizzTrack: document.getElementById('openBlizzTrack'),
+  openBlizzTrackDocs: document.getElementById('openBlizzTrackDocs')
 };
 
 const settingsInputs = {
   language: document.getElementById('language'),
   autoRefresh: document.getElementById('autoRefresh'),
   refreshMinutes: document.getElementById('refreshMinutes'),
+  notificationMode: document.getElementById('notificationMode'),
   runInBackground: document.getElementById('runInBackground'),
   launchAtLogin: document.getElementById('launchAtLogin'),
   emailEnabled: document.getElementById('emailEnabled'),
@@ -86,6 +91,9 @@ function applyTranslations(root = document) {
   });
   root.querySelectorAll?.('[data-i18n-aria-label]').forEach((node) => {
     node.setAttribute('aria-label', t(node.dataset.i18nAriaLabel));
+  });
+  root.querySelectorAll?.('[data-i18n-title]').forEach((node) => {
+    node.setAttribute('title', t(node.dataset.i18nTitle));
   });
 }
 
@@ -317,9 +325,16 @@ function renderCards() {
     );
     card.querySelector('.change-count').textContent = `(${timelineItems.length})`;
     const details = card.querySelector('.changes-details');
-    details.open = newsOpenByGameId.has(track.id) ? newsOpenByGameId.get(track.id) : true;
-    details.addEventListener('toggle', () => {
-      newsOpenByGameId.set(track.id, details.open);
+    details.open = entry.newsOpen !== false;
+    details.addEventListener('toggle', async () => {
+      const nextOpen = details.open;
+      const storedOpen = state.entries[track.id]?.newsOpen !== false;
+      if (nextOpen === storedOpen) return;
+      try {
+        state = await window.patchWatch.updateEntry(track.id, { newsOpen: nextOpen });
+      } catch (_error) {
+        details.open = storedOpen;
+      }
     });
     const timeline = card.querySelector('.timeline');
     if (!timelineItems.length) {
@@ -357,6 +372,7 @@ function populateSettings() {
   settingsInputs.language.value = settings.language || state.locale?.language || 'de';
   settingsInputs.autoRefresh.checked = settings.autoRefresh;
   settingsInputs.refreshMinutes.value = String(settings.refreshMinutes);
+  settingsInputs.notificationMode.value = settings.notificationMode || 'interface';
   settingsInputs.runInBackground.checked = settings.runInBackground;
   settingsInputs.launchAtLogin.checked = settings.launchAtLogin;
   settingsInputs.emailEnabled.checked = email.enabled;
@@ -380,6 +396,7 @@ function collectSettings() {
     language: settingsInputs.language.value,
     autoRefresh: settingsInputs.autoRefresh.checked,
     refreshMinutes: Number(settingsInputs.refreshMinutes.value),
+    notificationMode: settingsInputs.notificationMode.value,
     runInBackground: settingsInputs.runInBackground.checked,
     launchAtLogin: settingsInputs.launchAtLogin.checked,
     email: {
@@ -574,6 +591,13 @@ elements.emptyClientsButton.addEventListener('click', openClientsDialog);
 elements.closeSettings.addEventListener('click', () => elements.settingsDialog.close());
 elements.cancelSettings.addEventListener('click', () => elements.settingsDialog.close());
 elements.closeClients.addEventListener('click', () => elements.clientsDialog.close());
+elements.clientHelpButton.addEventListener('click', () => {
+  applyTranslations(elements.clientHelpDialog);
+  if (!elements.clientHelpDialog.open) elements.clientHelpDialog.showModal();
+});
+elements.closeClientHelp.addEventListener('click', () => elements.clientHelpDialog.close());
+elements.openBlizzTrack.addEventListener('click', () => window.patchWatch.openExternal('https://blizztrack.com/'));
+elements.openBlizzTrackDocs.addEventListener('click', () => window.patchWatch.openExternal('https://blizztrack.com/docs'));
 
 elements.previousPage.addEventListener('click', () => {
   currentPage = Math.max(0, currentPage - 1);

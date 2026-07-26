@@ -1,6 +1,6 @@
 {
   "name": "wow-patch-watch",
-  "version": "1.0.5",
+  "version": "1.0.6",
   "description": "Cross-platform World of Warcraft patch, PTR and addon compatibility tracker",
   "main": "main.js",
   "author": "Dakil",
@@ -10,7 +10,8 @@
     "start": "electron .",
     "dist": "electron-builder --publish never",
     "dist:win": "electron-builder --win nsis portable --publish never",
-    "dist:mac": "electron-builder --mac dmg zip --publish never"
+    "dist:mac": "electron-builder --mac dmg zip --publish never",
+    "test": "node tests/run-tests.js"
   },
   "dependencies": {
     "nodemailer": "^7.0.7"

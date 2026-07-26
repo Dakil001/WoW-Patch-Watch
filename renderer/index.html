@@ -77,11 +77,18 @@
               <option value="180" data-i18n="settings.interval.180">alle 3 Stunden</option>
               <option value="360" data-i18n="settings.interval.360">alle 6 Stunden</option>
               <option value="720" data-i18n="settings.interval.720">alle 12 Stunden</option>
-              <option value="1440" data-i18n="settings.interval.1440">täglich</option>
+              <option value="1440" data-i18n="settings.interval.1440" selected>täglich</option>
             </select>
           </label>
+          <label><span data-i18n="settings.notificationMode">Benachrichtigungsumfang</span>
+            <select id="notificationMode">
+              <option value="interface" data-i18n="settings.notificationMode.interface">Nur bei geänderter Interface-ID (empfohlen)</option>
+              <option value="all" data-i18n="settings.notificationMode.all">Bei jeder Versions- oder Buildänderung</option>
+            </select>
+            <span class="field-help" data-i18n="settings.notificationModeHelp">Gilt nur für Live/PTR-Einträge, bei denen „Benachrichtigen“ aktiviert ist. Anzeige und Verlauf werden immer aktualisiert.</span>
+          </label>
           <label class="toggle-row"><input id="runInBackground" type="checkbox"><span data-i18n="settings.background">Beim Schließen im Infobereich weiterlaufen</span></label>
-          <label class="toggle-row"><input id="launchAtLogin" type="checkbox"><span data-i18n="settings.launch">Mit Windows/macOS starten</span></label>
+          <label class="toggle-row"><input id="launchAtLogin" type="checkbox" checked><span data-i18n="settings.launch">Mit Windows/macOS starten</span></label>
         </section>
 
         <section class="settings-section">
@@ -131,7 +138,10 @@
         <input id="clientEditId" type="hidden">
         <div class="client-form-heading">
           <div>
-            <h3 id="clientFormTitle" data-i18n="clients.newTitle">Neuen Client hinzufügen</h3>
+            <div class="client-form-title-row">
+              <h3 id="clientFormTitle" data-i18n="clients.newTitle">Neuen Client hinzufügen</h3>
+              <button id="clientHelpButton" class="info-button" type="button" aria-label="Hilfe zu Clientdaten" data-i18n-aria-label="clients.helpAria">i</button>
+            </div>
             <p data-i18n="clients.formHelp">Die Client-ID ist der Battle.net-Produktname. Ein Präfix grenzt gemeinsam genutzte Produkte auf eine Versionsfamilie ein, beispielsweise 2.5.</p>
           </div>
         </div>
@@ -157,6 +167,61 @@
     </div>
   </dialog>
 
+
+  <dialog id="clientHelpDialog" class="client-help-dialog">
+    <div class="dialog-header">
+      <div>
+        <h2 data-i18n="clientHelp.title">Woher kommen die Clientdaten?</h2>
+        <p data-i18n="clientHelp.subtitle">So findest du Anzeigename, Battle.net-Produkt-ID und Versionspräfix für einen neuen WoW-Client.</p>
+      </div>
+      <button type="button" id="closeClientHelp" class="icon-button" aria-label="Schließen" data-i18n-aria-label="settings.closeAria">×</button>
+    </div>
+    <div class="client-help-body">
+      <section>
+        <h3 data-i18n="clientHelp.displayNameTitle">1. Anzeigename</h3>
+        <p data-i18n="clientHelp.displayNameText">Der Anzeigename ist frei wählbar und erscheint nur in WoW Patch Watch, beispielsweise „Classic Legion“.</p>
+      </section>
+      <section>
+        <h3 data-i18n="clientHelp.productTitle">2. Live-Client-ID</h3>
+        <p data-i18n="clientHelp.productText">Öffne bei BlizzTrack die Versionsansicht des gewünschten Produkts. Der Abschnitt direkt nach „/view/“ in der Adresse ist die Client-ID. Bei „/view/wow_classic?type=versions“ lautet sie beispielsweise „wow_classic“.</p>
+        <p class="code-line"><code>https://blizztrack.com/view/<strong>CLIENT-ID</strong>?type=versions</code></p>
+        <p data-i18n="clientHelp.productVerify">Zur Kontrolle kannst du die ID in die Blizzard-Versionsadresse einsetzen. Eine gültige ID liefert eine Texttabelle mit Region, Buildnummer und Versionsname.</p>
+        <p class="code-line"><code>https://eu.version.battle.net/v2/products/<strong>CLIENT-ID</strong>/versions</code></p>
+      </section>
+      <section>
+        <h3 data-i18n="clientHelp.prefixTitle">3. Versionspräfix</h3>
+        <p data-i18n="clientHelp.prefixText">Übernimm den Anfang des angezeigten Versionsnamens, beispielsweise „2.5“ aus „2.5.6.68775“. Das Präfix ist nur nötig, wenn mehrere WoW-Versionen dieselbe Produkt-ID verwenden. Mehrere Präfixe werden mit Komma getrennt.</p>
+      </section>
+      <section>
+        <h3 data-i18n="clientHelp.ptrTitle">4. PTR-/Testrealm-Daten</h3>
+        <p data-i18n="clientHelp.ptrText">Suche entsprechend nach dem Testprodukt und trage dessen Produkt-ID und gegebenenfalls das passende Präfix ein. Existiert kein Testclient, bleiben beide PTR-Felder leer.</p>
+      </section>
+      <section>
+        <h3 data-i18n="clientHelp.interfaceTitle">5. Interface-ID</h3>
+        <p data-i18n="clientHelp.interfaceText">Die Interface-ID wird nicht manuell eingetragen. WoW Patch Watch berechnet sie automatisch aus den ersten drei Teilen der Versionsnummer, beispielsweise 2.5.6 → 20506 oder 12.0.7 → 120007.</p>
+      </section>
+      <section>
+        <h3 data-i18n="clientHelp.examplesTitle">Bekannte Beispiele</h3>
+        <div class="help-table-wrap">
+          <table class="help-table">
+            <thead><tr><th data-i18n="clientHelp.tableClient">Client</th><th data-i18n="clientHelp.tableLive">Live-ID</th><th data-i18n="clientHelp.tablePtr">PTR-ID</th><th data-i18n="clientHelp.tablePrefix">Präfix</th></tr></thead>
+            <tbody>
+              <tr><td>Classic Era</td><td><code>wow_classic_era</code></td><td><code>wow_classic_era_ptr</code></td><td><code>1.15</code></td></tr>
+              <tr><td>Classic TBC</td><td><code>wow_anniversary</code></td><td><code>wow_classic_era_ptr</code></td><td><code>2.5</code></td></tr>
+              <tr><td>Classic Pandaria</td><td><code>wow_classic</code></td><td><code>wow_classic_ptr</code></td><td><code>5.5</code></td></tr>
+              <tr><td>Retail</td><td><code>wow</code></td><td><code>wowt</code></td><td>–</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="help-note" data-i18n="clientHelp.examplesNote">Die Beispiele können sich bei künftigen Veröffentlichungen ändern. Prüfe neue Produkt-IDs deshalb immer in der Versionsansicht.</p>
+      </section>
+      <div class="client-help-actions">
+        <button id="openBlizzTrack" class="button" type="button" data-i18n="clientHelp.openBlizzTrack">BlizzTrack öffnen</button>
+        <button id="openBlizzTrackDocs" class="button" type="button" data-i18n="clientHelp.openDocs">API-Dokumentation öffnen</button>
+      </div>
+    </div>
+  </dialog>
+
   <template id="cardTemplate">
     <article class="game-card">
       <div class="card-header">
@@ -165,13 +230,13 @@
       </div>
       <div class="channel-grid">
         <section class="channel live-channel">
-          <div class="channel-heading"><span data-i18n="card.live">LIVE</span><label><input class="notify-live" type="checkbox"> <span data-i18n="card.notify">Benachrichtigen</span></label></div>
+          <div class="channel-heading"><span data-i18n="card.live">LIVE</span><label class="notify-toggle" data-i18n-title="card.notifyTooltip"><input class="notify-live" type="checkbox"> <span data-i18n="card.notify">Benachrichtigen</span></label></div>
           <div class="version-value live-version"></div>
           <div class="interface-value live-interface"></div>
           <div class="observed-value live-observed"></div>
         </section>
         <section class="channel ptr-channel">
-          <div class="channel-heading"><span data-i18n="card.ptr">PTR / TESTREALM</span><label><input class="notify-ptr" type="checkbox"> <span data-i18n="card.notify">Benachrichtigen</span></label></div>
+          <div class="channel-heading"><span data-i18n="card.ptr">PTR / TESTREALM</span><label class="notify-toggle" data-i18n-title="card.notifyTooltip"><input class="notify-ptr" type="checkbox"> <span data-i18n="card.notify">Benachrichtigen</span></label></div>
           <div class="version-value ptr-version"></div>
           <div class="interface-value ptr-interface"></div>
           <div class="observed-value ptr-observed"></div>
